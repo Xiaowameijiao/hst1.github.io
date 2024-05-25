@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>火狮H.S.T. 绘画</title>
+<style>
+    body {
+        background-color: white;
+    }
+    canvas {
+        border: 4px solid black;
+        cursor: crosshair;
+    }
+
+    .button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+        border-radius: 5px;
+    }
+
+    .button:hover {
+        background-color: #45a049;
+    }
+
+    #clearButton {
+        background-color: #313131;
+    }
+
+    #undoButton {
+        background-color: black; 
+    }
+
+    #redoButton {
+        background-color: black; 
+    }
+
+    #shareButton {
+        background-color: #A9A9A9;
+    }
+
+    #shareButton:hover {
+        background-color: #005f6b;
+    }
+    .fixed-text {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        color: #1AE5C9;
+        margin: 5px; 
+    }
+</style>
+</head>
+<body>
+            <p class="fixed-text">团队: 火狮 H.S.T. v3.0</p>
+<center>
+<canvas id="paintCanvas" width="1200" height="600"></canvas><br>
+ 颜色选项: <input type="color" id="colorPicker"><br>
+大/小: <input type="range" min="1" max="20" value="5" id="thicknessSlider"><br>
+<button style="color: #008200"; class="button" id="clearButton" onclick="clearCanvas()">清除</button>
+<button style="color: #008200"; class="button" id="undoButton" onclick="undo()">↺</button>
+<button style="color: #008200"; class="button" id="redoButton" onclick="redo()">↻</button>
+<button style="color: black"; class="button" id="shareButton" onclick="shareCanvas()">保存作品 ⇩</button>
+</center>
+<script>
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const thicknessSlider = document.getElementById('thicknessSlider');
+    let isPainting = false;
+    let undoStack = [];
+    let redoStack = [];
+
+    canvas.addEventListener('mousedown', startPaint);
+    canvas.addEventListener('mousemove', paint);
+    canvas.addEventListener('mouseup', stopPaint);
+    canvas.addEventListener('mouseleave', stopPaint);
+
+    function startPaint(event) {
+        isPainting = true;
+        paint(event);
+    }
+
+    function paint(event) {
+        if (!isPainting) return;
+
+        const x = event.offsetX;
+        const y = event.offsetY;
+
+        ctx.lineWidth = thicknessSlider.value;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = colorPicker.value;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+
+        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        redoStack = []; // Clear redo stack when new stroke is drawn
+    }
+
+    function stopPaint() {
+        isPainting = false;
+        ctx.beginPath();
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+        redoStack = [];
+    }
+
+    function undo() {
+        if (undoStack.length > 1) {
+            redoStack.push(undoStack.pop());
+            ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+        }
+    }
+
+    function redo() {
+        if (redoStack.length > 0) {
+            undoStack.push(redoStack.pop());
+            ctx.putImageData(undoStack[undoStack.length - 1], 0, 0);
+        }
+    }
+
+    function shareCanvas() {
+        const image = canvas.toDataURL(); // Convert canvas to base64 image
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = 'my_drawing.png';
+        link.click();
+    }
+</script>
+
+</body>
+</html>
